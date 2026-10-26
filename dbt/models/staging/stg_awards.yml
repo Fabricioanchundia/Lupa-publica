@@ -1,0 +1,35 @@
+models:
+  - name: stg_awards
+    description: One row per award. Amounts of 0 are treated as unknown (NULL).
+    data_tests:
+      - unique:
+          arguments:
+            column_name: "ocid || '|' || award_id"
+    columns:
+      - name: ocid
+        data_tests: [not_null]
+      - name: award_id
+        data_tests: [not_null]
+      - name: award_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [pending, active, cancelled, unsuccessful]
+      - name: award_amount
+        data_tests: [positive]
+
+  - name: stg_award_suppliers
+    description: >
+      One row per supplier of an award. Natural persons are pseudonymized (ADR-0004):
+      supplier_key is an HMAC of the cédula and supplier_name is NULL.
+    columns:
+      - name: ocid
+        data_tests: [not_null]
+      - name: award_id
+        data_tests: [not_null]
+      - name: supplier_type
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [private_company, public_entity, natural_person, unknown]
