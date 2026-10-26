@@ -65,3 +65,29 @@ License: CC BY 3.0 EC. Attribution: Servicio Nacional de Contratación Pública 
 - **"Emergency overuse" and "contract splitting" are not computed from this source.** Documented as methodology limitations.
 - **Keyword matches are never used as classifications.**
 - **Addresses of natural-person suppliers are not stored** (LOPDP data minimization).
+
+---
+
+## Field coverage inside key objects (sample of 5,000 processes, 2026-10-26)
+Generated with `scripts/explore_fields.py` (prints field names and categorical values only).
+
+- **Tender period:** `startDate` 18%; `endDate` and `durationInDays` only ~6.5%.
+- **Tenderers:** `tender.tenderers[]` and `numberOfTenderers` in ~18% (non-catalogue procedures).
+- **Award items:** unit price `unit.value.amount` 96%, CPC `classification` 99.9%, unit of measure `unit.name` only 64%. Price comparisons must use items with the same CPC and unit.
+- **Rare `enteredValue` / `correctedValue`:** SERCOP's own value clean-up (see the publication policy).
+- **Items per award:** median 1, p99 31, max 515. Never unnest every item of the whole table in one SQL query (it ran out of memory).
+- **Contracts:** `value`, `dateSigned` and `period` only ~15%; **no `amendments`**; status `terminated` 74% / `active` 26`%`. OCDS "terminated" does not distinguish completion from early termination.
+- **`tender.competitive`:** only `true` or missing, never `false`. Meaning unclear: not used until checked against procurement methods.
+- **Parties:** `identifier` (scheme EC-RUC) and `contactPoint` in ~100%. `contactPoint` is never loaded (personal contact data).
+
+## Indicator feasibility
+| Indicator | Feasible | Basis |
+|---|---|---|
+| Single bidder | Yes | `numberOfTenderers` (competitive procedures) |
+| Supplier concentration per buyer | Yes | `awards[].suppliers` |
+| Unusual unit prices | Yes, with care | unit price + CPC + unit of measure |
+| Short submission period | Limited | `durationInDays` (~6.5% of processes) |
+| Contract value increase after signing | No | amendments are not published |
+| Newly created companies | No (needs another source) | OCDS has no company creation date |
+| Emergency overuse | No | emergency procedures not identifiable |
+| Contract splitting | No | ínfima cuantía not published |
