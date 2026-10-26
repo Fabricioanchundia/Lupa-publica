@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 BULK_URL = "https://datosabiertos.compraspublicas.gob.ec/PLATAFORMA/download"
 USER_AGENT = "lupa-publica/0.1 (+https://github.com/Fabricioanchundia/Lupa-publica)"
-TIMEOUT = httpx.Timeout(300.0, connect=30.0)
+TIMEOUT = httpx.Timeout(60.0, connect=30.0)
 FIRST_YEAR = 2015
 
 
@@ -67,7 +67,7 @@ def download_month(
     *,
     client: httpx.Client | None = None,
     force: bool = False,
-    retries: int = 3,
+    retries: int = 5,
     backoff_seconds: float = 5.0,
 ) -> Path:
     """Download one month as ``<dest_dir>/<YYYY-MM>.zip`` and return its path.
