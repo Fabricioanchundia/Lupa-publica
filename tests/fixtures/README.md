@@ -12,5 +12,9 @@ every dbt test (including the privacy test from ADR-0004) runs on every pull req
   (company + person), a public company as supplier, malformed and unparseable ids,
   an award of 0 (unknown amount), several awards in one process, a buyer without an
   address, and a process without awards.
+- Items: repeated CPC codes, a unit name with spaces and lowercase, a missing unit,
+  a price of 0 and a quantity of 0, a fractional price, and a large purchase
+  (120,000 units at 450,000) that overflows DECIMAL(18) if line amounts are not widened.
+- Tender: one bidder, three bidders, zero bidders, and tender periods of 3, 5 and 10 days.
 
 If you add a case, keep it fictitious and add a test that would fail without it.
