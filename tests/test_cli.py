@@ -27,3 +27,10 @@ def test_backfill_requires_a_range() -> None:
     args = build_parser().parse_args(["backfill", "--from", "2025-01", "--to", "2025-03"])
 
     assert (args.start, args.end) == (Month(2025, 1), Month(2025, 3))
+
+
+def test_report_accepts_an_output_path() -> None:
+    args = build_parser().parse_args(["report", "--output", "docs/coverage-report.md"])
+
+    assert args.command == "report"
+    assert str(args.output) == "docs/coverage-report.md"

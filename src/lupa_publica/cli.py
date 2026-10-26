@@ -1,4 +1,4 @@
-"""Command-line interface: ``lupa ingest`` and ``lupa backfill``."""
+"""Command-line interface: ``lupa ingest``, ``lupa backfill`` and ``lupa report``."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from pathlib import Path
 
 from lupa_publica.extract import Month
 from lupa_publica.pipeline import DataPaths, IngestResult, ingest, last_months, month_range
+from lupa_publica.report import build_report, render_markdown
 
 
 def parse_month(text: str) -> Month:
@@ -37,6 +38,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     backfill_cmd.add_argument("--from", dest="start", type=parse_month, required=True)
     backfill_cmd.add_argument("--to", dest="end", type=parse_month, required=True)
+
+    report_cmd = commands.add_parser("report", help="data coverage report in Markdown")
+    report_cmd.add_argument(
+        "--output", type=Path, help="write the report to this file instead of printing it"
+    )
     return parser
 
 
@@ -57,6 +63,17 @@ def print_summary(result: IngestResult) -> None:
     print("status:", "OK" if result.ok else "FAILED")
 
 
+def run_report(paths: DataPaths, output: Path | None) -> int:
+    text = render_markdown(build_report(paths.db))
+    if output is None:
+        print(text)
+    else:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(text, encoding="utf-8")
+        print(f"report written to {output}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -65,6 +82,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    paths = DataPaths(args.data_dir)
+
+    if args.command == "report":
+        return run_report(paths, args.output)
 
     if args.command == "ingest":
         if args.months < 1:
@@ -78,6 +99,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             parser.error(str(exc))
         refresh = False
 
-    result = ingest(months, DataPaths(args.data_dir), refresh=refresh)
+    result = ingest(months, paths, refresh=refresh)
     print_summary(result)
     return 0 if result.ok else 1
