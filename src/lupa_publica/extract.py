@@ -20,10 +20,16 @@ BULK_URL = "https://datosabiertos.compraspublicas.gob.ec/PLATAFORMA/download"
 USER_AGENT = "lupa-publica/0.1 (+https://github.com/Fabricioanchundia/Lupa-publica)"
 TIMEOUT = httpx.Timeout(60.0, connect=30.0)
 FIRST_YEAR = 2015
+# A healthy download of the largest months (~20 MB) takes under 2 minutes.
+MAX_ATTEMPT_SECONDS = 600.0
 
 
 class DownloadError(RuntimeError):
     """Raised when a monthly file cannot be downloaded."""
+
+
+class SlowDownloadError(RuntimeError):
+    """An attempt exceeded its time budget because the server is trickling data."""
 
 
 @dataclass(frozen=True, order=True)
@@ -58,7 +64,7 @@ def _is_retryable(exc: Exception) -> bool:
     """Network failures, 5xx responses and broken ZIPs are temporary; 4xx are not."""
     if isinstance(exc, httpx.HTTPStatusError):
         return exc.response.status_code >= 500
-    return isinstance(exc, httpx.TransportError | zipfile.BadZipFile)
+    return isinstance(exc, httpx.TransportError | zipfile.BadZipFile | SlowDownloadError)
 
 
 def download_month(
@@ -69,12 +75,14 @@ def download_month(
     force: bool = False,
     retries: int = 5,
     backoff_seconds: float = 5.0,
+    max_attempt_seconds: float = MAX_ATTEMPT_SECONDS,
 ) -> Path:
     """Download one month as ``<dest_dir>/<YYYY-MM>.zip`` and return its path.
 
     - Idempotent: an existing file is reused unless ``force`` is True.
     - Atomic: data goes to a ``.part`` file, renamed only when complete and valid.
-    - Resilient: transport errors, 5xx responses and invalid ZIPs are retried.
+    - Resilient: transport errors, 5xx responses, invalid ZIPs and attempts slower
+      than ``max_attempt_seconds`` are retried.
     """
     dest_dir.mkdir(parents=True, exist_ok=True)
     target = dest_dir / f"{month.label}.zip"
@@ -89,12 +97,18 @@ def download_month(
     partial = target.with_name(target.name + ".part")
     try:
         for attempt in range(1, retries + 1):
+            started = time.monotonic()
             try:
                 with http.stream("GET", BULK_URL, params=bulk_params(month)) as response:
                     response.raise_for_status()
                     with partial.open("wb") as fh:
                         for chunk in response.iter_bytes():
                             fh.write(chunk)
+                            if time.monotonic() - started > max_attempt_seconds:
+                                raise SlowDownloadError(
+                                    f"{month.label}: attempt took longer than "
+                                    f"{max_attempt_seconds:.0f}s"
+                                )
                 if not zipfile.is_zipfile(partial):
                     raise zipfile.BadZipFile(f"{month.label}: response is not a ZIP file")
                 partial.replace(target)
