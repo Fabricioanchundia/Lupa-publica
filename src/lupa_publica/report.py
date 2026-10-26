@@ -35,16 +35,21 @@ ORDER BY source_month
 """
 
 REGIONS_SQL = """
-WITH buyers AS (
-    SELECT r.ocid, p.value AS party
-    FROM bronze.releases AS r, json_each(r.payload, '$.parties') AS p
-    WHERE list_contains(CAST(p.value -> '$.roles' AS VARCHAR[]), 'buyer')
+-- One row per process: the region of its first buyer. Using list_filter instead of
+-- json_each avoids exploding every party into a row, which ran out of memory
+-- on 24 months of data.
+WITH buyer_region AS (
+    SELECT list_filter(
+               CAST(payload -> '$.parties' AS JSON[]),
+               lambda party: list_contains(CAST(party -> '$.roles' AS VARCHAR[]), 'buyer')
+           )[1] ->> '$.address.region' AS region
+    FROM bronze.releases
 )
 SELECT
-    coalesce((party ->> '$.address.region'), 'UNKNOWN') AS region,
-    count(DISTINCT ocid) AS processes,
-    round(100.0 * count(DISTINCT ocid) / (SELECT count(*) FROM bronze.releases), 1)
-FROM buyers
+    coalesce(region, 'UNKNOWN') AS region,
+    count(*) AS processes,
+    round(100.0 * count(*) / sum(count(*)) OVER (), 1)
+FROM buyer_region
 GROUP BY 1
 ORDER BY 2 DESC, 1
 """
@@ -67,12 +72,14 @@ DISCLAIMER = (
 )
 
 KNOWN_GAPS = """\
+- **Recent months are provisional.** Awards and contracts keep being published for \
+months after a process starts, so the latest months look smaller than they will be.
+- **Single months are not representative.** January has far fewer processes than other \
+months (start of the budget year); compare full years.
 - **Ínfima cuantía** purchases are not published in this source.
 - **Emergency procedures** cannot be identified as a procedure type.
 - **Processes changed after the rolling window** (e.g. contract amendments) are only \
-captured when history is reloaded (see ADR-0001).
-- **Guayas** looked under-represented in early samples; compare its share above with \
-its population before drawing conclusions."""
+captured when history is reloaded (see ADR-0001)."""
 
 
 @dataclass(frozen=True)
