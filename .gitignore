@@ -29,3 +29,4 @@ logs/
 .vscode/
 .idea/
 .DS_Store
+.user.yml
