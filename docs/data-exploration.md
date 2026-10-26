@@ -35,3 +35,33 @@ License: CC BY 3.0 EC. Attribution: Servicio Nacional de Contratación Pública 
 - What does the bulk ZIP contain, and how large is one month?
 - How complete are `awards` and `contracts` across procedure types and years?
 - What does the numeric suffix in buyer IDs (e.g. `-2668`) represent?
+
+---
+
+## Bulk download findings (January 2025 sample)
+- **Format:** ZIP (~1.1 MB) containing a single JSON file `releases_<YYYY>_<month in Spanish>.json` (~13.6 MB uncompressed).
+- **Speed:** ~65 s per month (~17 KB/s). The server is slow, so avoid full re-downloads.
+- **Regenerated nightly:** the January 2025 file was dated 2026-10-25, so past months keep changing (awards and contracts are added later).
+- **Structure:** JSON array of release packages, each with exactly one compiled release. Same shape as the record API, so one parser can serve both sources.
+- **Volume:** 2,210 processes, 2,210 unique OCIDs (no duplicates). About 163 MB/year uncompressed, consistent with the OCP data registry.
+
+## Profile (January 2025)
+- **Stages:** 1,953 `tender,award,contract`; 87 reach `implementation`; 45 `planning` only.
+- **Standard method (`tender.procurementMethod`):** selective 1,534 · direct 508 · open 117 · limited 6. The 45 planning-only processes have no tender, so 2,165 + 45 = 2,210 ✅.
+- **Electronic catalogue purchases are about 77%** of processes and are mapped by SERCOP as `selective`.
+- **Competitive procedures are only about 160** (reverse auction, menor cuantía, cotización, short list, insurance tender).
+- **`procurementMethodDetails` mixes the procedure type and the framework agreement name.** Must be split.
+- **Buyer location** is in `parties[role=buyer].address.region/locality`; 14 buyers have no region.
+- **Manabí is the 2nd province by number of processes** (280; Pichincha 316).
+
+## Coverage gaps (limitations)
+- **Ínfima cuantía is not present** (API search returns 0).
+- **No emergency procedure type was found.** The keyword "emergencia" only matches item descriptions, not procedure types.
+- **Guayas looks under-represented** (65 processes vs 316 in Pichincha). Inconclusive; needs reconciliation against portal totals.
+
+## Decisions derived
+- **Rolling window reload:** each daily run re-downloads the last N months (N = 6 initially) and replaces them.
+- **"Single bidder" applies only to competitive procedures.**
+- **"Emergency overuse" and "contract splitting" are not computed from this source.** Documented as methodology limitations.
+- **Keyword matches are never used as classifications.**
+- **Addresses of natural-person suppliers are not stored** (LOPDP data minimization).
