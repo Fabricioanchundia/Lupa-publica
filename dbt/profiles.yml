@@ -1,0 +1,12 @@
+lupa_publica:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      # Same database file the pipeline writes (run dbt from the repository root).
+      path: "{{ env_var('LUPA_DUCKDB_PATH', 'data/lupa.duckdb') }}"
+      schema: main
+      threads: 4
+      settings:
+        memory_limit: "3GB"
+        preserve_insertion_order: false

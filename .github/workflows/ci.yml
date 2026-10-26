@@ -19,3 +19,5 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run mypy src
       - run: uv run pytest
+      - run: uv run dbt parse --project-dir dbt --profiles-dir dbt
+      - run: uv run dbt parse --project-dir dbt --profiles-dir dbt --use-v2-parser

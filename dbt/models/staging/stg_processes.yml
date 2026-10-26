@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: stg_processes
+    description: >
+      One row per contracting process with typed columns extracted from the OCDS
+      release. Monetary zeros are converted to NULL (SERCOP uses 0 for "unknown").
+    columns:
+      - name: ocid
+        description: Open Contracting ID, unique per process.
+        data_tests:
+          - not_null
+          - unique
+      - name: source_month
+        description: Monthly bulk file the process came from (YYYY-MM).
+        data_tests:
+          - not_null
+      - name: procurement_method
+        description: OCDS standard method. NULL for processes that only have a plan.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["open", "selective", "limited", "direct"]
+      - name: tender_amount
+        description: Estimated budget in USD. NULL when SERCOP published 0 or nothing.
+        data_tests:
+          - positive
+      - name: buyer_region
+        description: Province of the buyer as registered by SERCOP. NULL for some entities (e.g. Santo Domingo).
