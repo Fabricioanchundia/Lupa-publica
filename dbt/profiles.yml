@@ -10,3 +10,6 @@ lupa_publica:
       settings:
         memory_limit: "3GB"
         preserve_insertion_order: false
+      # Registers pseudonymize() (HMAC-SHA256). The key comes from LUPA_PSEUDONYM_KEY.
+      plugins:
+        - module: lupa_publica.dbt_plugin
