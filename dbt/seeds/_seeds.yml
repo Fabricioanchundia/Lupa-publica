@@ -1,0 +1,53 @@
+version: 2
+
+seeds:
+  - name: buyer_locations
+    description: >
+      Manual province and canton for buyers that SERCOP publishes without an address.
+      Every row must state its evidence. Only used when the buyer never publishes
+      a location itself.
+    config:
+      column_types:
+        buyer_id: varchar
+        buyer_name: varchar
+        region: varchar
+        locality: varchar
+        evidence: varchar
+    columns:
+      - name: buyer_id
+        data_tests:
+          - not_null
+          - unique
+      - name: region
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: &provinces
+                  - AZUAY
+                  - BOLIVAR
+                  - CAÑAR
+                  - CARCHI
+                  - CHIMBORAZO
+                  - COTOPAXI
+                  - EL ORO
+                  - ESMERALDAS
+                  - GALAPAGOS
+                  - GUAYAS
+                  - IMBABURA
+                  - LOJA
+                  - LOS RIOS
+                  - MANABI
+                  - MORONA SANTIAGO
+                  - NAPO
+                  - ORELLANA
+                  - PASTAZA
+                  - PICHINCHA
+                  - SANTA ELENA
+                  - SANTO DOMINGO DE LOS TSACHILAS
+                  - SUCUMBIOS
+                  - TUNGURAHUA
+                  - ZAMORA CHINCHIPE
+      - name: evidence
+        data_tests:
+          - not_null

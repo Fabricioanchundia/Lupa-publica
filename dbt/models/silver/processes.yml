@@ -1,0 +1,49 @@
+version: 2
+
+models:
+  - name: processes
+    description: >
+      One row per contracting process, with the buyer's province and canton resolved.
+      `buyer_location_source` says whether the location was published by SERCOP,
+      taken from the same buyer's other processes, or assigned manually with evidence.
+    columns:
+      - name: ocid
+        data_tests:
+          - not_null
+          - unique
+      - name: buyer_region
+        description: Province of the buyer. NULL when still unknown.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - AZUAY
+                  - BOLIVAR
+                  - CAÑAR
+                  - CARCHI
+                  - CHIMBORAZO
+                  - COTOPAXI
+                  - EL ORO
+                  - ESMERALDAS
+                  - GALAPAGOS
+                  - GUAYAS
+                  - IMBABURA
+                  - LOJA
+                  - LOS RIOS
+                  - MANABI
+                  - MORONA SANTIAGO
+                  - NAPO
+                  - ORELLANA
+                  - PASTAZA
+                  - PICHINCHA
+                  - SANTA ELENA
+                  - SANTO DOMINGO DE LOS TSACHILAS
+                  - SUCUMBIOS
+                  - TUNGURAHUA
+                  - ZAMORA CHINCHIPE
+      - name: buyer_location_source
+        description: published, same_buyer, manual, or NULL when unknown.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["published", "same_buyer", "manual"]

@@ -16,3 +16,17 @@ models:
       # Parsing the raw JSON is the expensive part, so it happens once, into tables.
       +materialized: table
       +schema: silver
+    intermediate:
+      +materialized: table
+      +schema: silver
+    silver:
+      +materialized: table
+      +schema: silver
+
+seeds:
+  lupa_publica:
+    +schema: silver
+
+flags:
+  # No usage telemetry: this project is about public data, not about its users.
+  send_anonymous_usage_stats: false

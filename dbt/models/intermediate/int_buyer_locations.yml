@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: int_buyer_locations
+    description: Best-known province and canton per buyer, with the source of that location.
+    columns:
+      - name: buyer_id
+        data_tests:
+          - not_null
+          - unique
+      - name: location_source
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["same_buyer", "manual"]
