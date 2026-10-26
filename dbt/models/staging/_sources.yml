@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: Raw OCDS compiled releases loaded by `lupa backfill` / `lupa ingest`.
+    tables:
+      - name: releases
+        description: One row per contracting process, with the full release as JSON in `payload`.
+        columns:
+          - name: ocid
+            data_tests:
+              - not_null
+              - unique
