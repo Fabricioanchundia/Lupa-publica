@@ -1,9 +1,11 @@
 import argparse
+from pathlib import Path
 
 import pytest
 
-from lupa_publica.cli import build_parser, parse_month
+from lupa_publica.cli import build_parser, main, parse_month
 from lupa_publica.extract import Month
+from lupa_publica.lock import exclusive_lock
 
 
 def test_parse_month_accepts_yyyy_mm() -> None:
@@ -34,3 +36,15 @@ def test_report_accepts_an_output_path() -> None:
 
     assert args.command == "report"
     assert str(args.output) == "docs/coverage-report.md"
+
+
+def test_refuses_to_start_while_another_run_is_active(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    args = ["--data-dir", str(tmp_path), "backfill", "--from", "2025-01", "--to", "2025-01"]
+
+    with exclusive_lock(tmp_path / ".lupa.lock"):
+        exit_code = main(args)
+
+    assert exit_code == 1
+    assert "already running" in capsys.readouterr().out

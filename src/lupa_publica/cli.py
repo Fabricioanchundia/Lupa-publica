@@ -9,6 +9,7 @@ from datetime import date
 from pathlib import Path
 
 from lupa_publica.extract import Month
+from lupa_publica.lock import AlreadyRunningError, exclusive_lock
 from lupa_publica.pipeline import DataPaths, IngestResult, ingest, last_months, month_range
 from lupa_publica.report import build_report, render_markdown
 
@@ -99,6 +100,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             parser.error(str(exc))
         refresh = False
 
-    result = ingest(months, paths, refresh=refresh)
+    try:
+        with exclusive_lock(paths.lock):
+            result = ingest(months, paths, refresh=refresh)
+    except AlreadyRunningError as exc:
+        print(f"{exc}. Wait for it to finish, or stop it before starting a new one.")
+        return 1
     print_summary(result)
     return 0 if result.ok else 1
