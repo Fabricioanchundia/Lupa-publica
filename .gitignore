@@ -29,4 +29,5 @@ logs/
 .vscode/
 .idea/
 .DS_Store
+!dbt/seeds/*.csv
 .user.yml
