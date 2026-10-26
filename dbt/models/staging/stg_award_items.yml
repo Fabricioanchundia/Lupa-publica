@@ -1,0 +1,23 @@
+models:
+  - name: stg_award_items
+    description: >
+      One row per item of an award (CPC code, quantity, unit, unit price).
+      Prices of 0 are treated as unknown (NULL). Descriptions are not loaded.
+    data_tests:
+      - unique:
+          arguments:
+            column_name: "ocid || '|' || award_id || '|' || item_index"
+    columns:
+      - name: ocid
+        data_tests: [not_null]
+      - name: award_id
+        data_tests: [not_null]
+      - name: unit_price
+        data_tests: [positive]
+      - name: quantity
+        data_tests:
+          # A warning, not an error: we want to know about quantities <= 0,
+          # but they are SERCOP's data quality issue, not a bug in our model.
+          - positive:
+              config:
+                severity: warn
