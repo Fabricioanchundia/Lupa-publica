@@ -7,7 +7,9 @@ authors = [
     { name = "Fabricio Anchundia", email = "227284579+Fabricioanchundia@users.noreply.github.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "httpx>=0.28.1",
+]
 
 [project.scripts]
 lupa-publica = "lupa_publica:main"
