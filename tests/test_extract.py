@@ -88,3 +88,25 @@ def test_invalid_zip_leaves_no_files(tmp_path: Path) -> None:
 def test_month_rejects_invalid_values(year: int, month: int) -> None:
     with pytest.raises(ValueError):
         Month(year, month)
+
+
+def test_gives_up_on_attempts_that_are_too_slow(tmp_path: Path) -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(200, content=make_zip())
+
+    with pytest.raises(DownloadError, match="longer than"):
+        download_month(
+            Month(2025, 1),
+            tmp_path,
+            client=client_with(handler),
+            retries=2,
+            backoff_seconds=0,
+            max_attempt_seconds=-1,
+        )
+
+    assert calls == 2
+    assert list(tmp_path.iterdir()) == []
