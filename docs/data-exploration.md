@@ -76,7 +76,7 @@ Generated with `scripts/explore_fields.py` (prints field names and categorical v
 - **Award items:** unit price `unit.value.amount` 96%, CPC `classification` 99.9%, unit of measure `unit.name` only 64%. Price comparisons must use items with the same CPC and unit.
 - **Rare `enteredValue` / `correctedValue`:** SERCOP's own value clean-up (see the publication policy).
 - **Items per award:** median 1, p99 31, max 515. Never unnest every item of the whole table in one SQL query (it ran out of memory).
-- **Contracts:** `value`, `dateSigned` and `period` only ~15%; **no `amendments`**; status `terminated` 74% / `active` 26`%`. OCDS "terminated" does not distinguish completion from early termination.
+- **Contracts:** `value`, `dateSigned` and `period` only ~15%; **no `amendments`**; status `terminated` 74% / `active` 26%. OCDS "terminated" does not distinguish completion from early termination.
 - **`tender.competitive`:** only `true` or missing, never `false`. Meaning unclear: not used until checked against procurement methods.
 - **Parties:** `identifier` (scheme EC-RUC) and `contactPoint` in ~100%. `contactPoint` is never loaded (personal contact data).
 
@@ -91,3 +91,24 @@ Generated with `scripts/explore_fields.py` (prints field names and categorical v
 | Newly created companies | No (needs another source) | OCDS has no company creation date |
 | Emergency overuse | No | emergency procedures not identifiable |
 | Contract splitting | No | ínfima cuantía not published |
+
+---
+
+## Awards, suppliers, items and tenderers (24 months, 2026-10-26)
+Explored with `scripts/supplier_shapes.py` (id shapes only, no real identifiers) and the silver models.
+
+- **Suppliers:** 23,950 distinct (by RUC). 15,264 natural persons (64%), 8,540 companies (with 75% of awards), 17 public entities, 129 malformed ids. Details and decisions in ADR-0004.
+- **Items:** 894,736. Unit price 97%, unit of measure 68%, 9,588 distinct CPC codes, no quantities ≤ 0.
+- **Tenderers:** `numberOfTenderers` always equals the length of the `tenderers` list (0 differences, checked with `IS DISTINCT FROM` so missing values are counted). It is probably derived from the list.
+
+| Procurement method | Processes | With number of tenderers | Exactly one tenderer | With tender period |
+|---|---:|---:|---:|---:|
+| selective | 197,395 | 4,266 | 1,344 | 4,266 |
+| direct | 82,542 | 9,039 | 9,017 | 6,737 |
+| open | 48,318 | 47,689 | 9,286 (19.5%) | 11,835 |
+| (missing) | 13,577 | 0 | 0 | 0 |
+| limited | 450 | 450 | 160 | 14 |
+
+- **Single tenderer is only meaningful in competitive procedures.** Direct awards have one supplier by design, so counting them would create about 9,000 false signals.
+- About **1 in 5 open procedures received a single bid**. This is a risk signal to study (small markets and very specific requirements are legitimate causes), not evidence of wrongdoing.
+- **Short tender period** becomes feasible for open procedures (24% coverage), not just "limited".
