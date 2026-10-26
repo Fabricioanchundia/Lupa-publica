@@ -38,6 +38,10 @@ class DataPaths:
     def db(self) -> Path:
         return self.root / "lupa.duckdb"
 
+    @property
+    def lock(self) -> Path:
+        return self.root / ".lupa.lock"
+
 
 @dataclass
 class IngestResult:
