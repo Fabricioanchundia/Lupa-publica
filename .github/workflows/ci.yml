@@ -21,3 +21,14 @@ jobs:
       - run: uv run pytest
       - run: uv run dbt parse --project-dir dbt --profiles-dir dbt
       - run: uv run dbt parse --project-dir dbt --profiles-dir dbt --use-v2-parser
+
+      # Build every dbt model and run every data test (including the privacy test
+      # from ADR-0004) on synthetic data, so a broken model cannot be merged.
+      - name: dbt build on the synthetic fixture
+        env:
+          LUPA_DUCKDB_PATH: data/ci.duckdb
+        run: |
+          uv run python scripts/load_fixture.py "$LUPA_DUCKDB_PATH"
+          # Throwaway key, generated per run: it only ever touches fake data.
+          LUPA_PSEUDONYM_KEY="$(openssl rand -hex 32)" \
+            uv run dbt build --project-dir dbt --profiles-dir dbt
